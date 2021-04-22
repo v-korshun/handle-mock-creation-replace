@@ -7,6 +7,7 @@ module.exports = function transformer(file, api) {
     const isSetResponseMock =
       callee.object &&
       callee.object.name === 'PretenderManager' &&
+      callee.property &&
       callee.property.name === 'setResponseMock';
     if (!isSetResponseMock) {
       return false;
@@ -19,49 +20,25 @@ module.exports = function transformer(file, api) {
       mock.callee.name === 'handleMockCreation' &&
       mock.arguments.length === 0;
     const httpCodeProperty =
-      options && options.properties.filter((option) => option.key.name === 'code')[0];
+      options &&
+      options.properties &&
+      options.properties.filter((option) => option.key && option.key.name === 'code')[0];
     const hasSuccessCodeVarriable =
       httpCodeProperty &&
+      httpCodeProperty.value &&
       httpCodeProperty.value.property &&
       httpCodeProperty.value.property.name.indexOf('200') !== -1;
-    const hasRawSuccessCode = httpCodeProperty && httpCodeProperty.value.value === 200;
+    const hasRawSuccessCode =
+      httpCodeProperty && httpCodeProperty.value && httpCodeProperty.value.value === 200;
     const isSuccessMock = !options || hasSuccessCodeVarriable || hasRawSuccessCode;
 
     return isEmptyHandleMock && isSuccessMock;
-  }
-
-  function isAutoMockEnabled(node) {
-    return (
-      node.type === 'CallExpression' &&
-      node.callee &&
-      node.callee.object &&
-      node.callee.object.name === 'PretenderManager' &&
-      node.callee.property.name === 'enableAutoMockCreation'
-    );
   }
 
   return j(file.source)
     .find(j.CallExpression, hasEmptyHandleMockCreation)
     .forEach((path) => {
       path.parentPath.replace();
-      debugger;
-      const mockEnabledStatements = path.parentPath.parentPath.value.filter((statement) =>
-        isAutoMockEnabled(statement.expression)
-      );
-      if (!mockEnabledStatements.length) {
-        path.parentPath.insertAfter(
-          j.expressionStatement(
-            j.callExpression(
-              j.memberExpression(
-                j.identifier('PretenderManager'),
-                j.identifier('enableAutoMockCreation')
-              ),
-              []
-            ),
-            []
-          )
-        );
-      }
     })
     .toSource();
 };

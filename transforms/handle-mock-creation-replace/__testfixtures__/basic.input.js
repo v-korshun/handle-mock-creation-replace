@@ -45,4 +45,12 @@ module('Acceptance | Routes | route', function () {
       someProp: true,
     }
   );
+  PretenderManager.setResponseMock(
+    'get',
+    addQueryParams('/voyager/api/organization/pageOnboardingPromos', {
+      pageUrn: this.companyUrn,
+      q: 'pageAndCategory',
+    }),
+    handleMockCreation()
+  );
 });
