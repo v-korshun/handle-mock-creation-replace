@@ -33,10 +33,23 @@ PretenderManager.setResponseMock(
 PretenderManager.setResponseMock(
   'get',
   'some-api',
+  mocker
+    .mockCollection(
+      'collection-type'
+    ).with('elements', [])
+);
+PretenderManager.setResponseMock(
+  'get',
+  'some-api',
   mocker.mockPDSC('type')
 );
 PretenderManager.setResponseMock(
   'get',
   'some-api',
   mocker.mockPDSC('type').with('value', 1)
+);
+PretenderManager.setResponseMock(
+  'get',
+  'some-api',
+  mocker.mockPDSC('some-type', {})
 );

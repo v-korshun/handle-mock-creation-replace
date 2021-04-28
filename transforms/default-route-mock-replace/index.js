@@ -7,7 +7,6 @@ module.exports = function transformer(file, api) {
   const j = getParser(api);
 
   function isEmptyCollectionMock(mock) {
-    debugger;
     return (
       mock &&
       mock.type === 'CallExpression' &&
@@ -28,9 +27,7 @@ module.exports = function transformer(file, api) {
     );
   }
 
-  function isDefaultMockWithNoOverrides(context) {
-    debugger;
-    const { node } = context;
+  function isDefaultMockWithNoOverrides(node) {
     const method = node && node.elements && node.elements[0];
     const mock = node && node.elements && node.elements[1];
     if (method && method.type === 'StringLiteral' && METHODS.has(method.value)) {
@@ -43,17 +40,18 @@ module.exports = function transformer(file, api) {
       const isMockingCall =
         mock &&
         mock.type === 'CallExpression' &&
+        mock.arguments &&
+        mock.arguments.length === 1 &&
         mock.callee &&
         mock.callee.property &&
         (mock.callee.property.name === 'mockCollection' ||
           mock.callee.property.name === 'mockPDSC' ||
           mock.callee.property.name === 'mockAction');
-      console.log(
-        `ArrayExpression ${context} - ${
-          isMocker && isMockingCall ? 'no overrides' : 'has overrides'
-        }`
-      );
+
       if (isMocker && isMockingCall) {
+        if (mock.callee.property.name === 'mockCollection') {
+          return isEmptyCollectionMock(mock);
+        }
         return true;
         // Collection override with elements as empty Array
       } else if (isEmptyCollectionMock(mock)) {
@@ -66,8 +64,6 @@ module.exports = function transformer(file, api) {
   return j(file.source)
     .find(j.ArrayExpression, isDefaultMockWithNoOverrides)
     .forEach((path) => {
-      debugger;
-      console.log(path.parentPath);
       path.parentPath.replace();
     })
     .toSource();
